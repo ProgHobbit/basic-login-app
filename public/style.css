@@ -15,3 +15,7 @@ button {
 button {
     cursor: pointer;
 }
+
+.navbar {
+    background-color: #333;
+}
