@@ -5,8 +5,9 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
-// Middleware to parse JSON request bodies
+// Middleware to parse JSON and URL-encoded request bodies
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Added to handle form data (e.g., from <form method="POST">)
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -54,6 +55,36 @@ app.post('/login', async(req, res) => {
         }
     } catch (error) {
         console.error('Login error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Handle signup POST request
+app.post('/signup', async(req, res) => {
+    const { username, password } = req.body;
+
+    // Basic validation
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    try {
+        // Check if username already exists
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(409).json({ error: 'Username already exists' });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create new user
+        const newUser = new User({ username, password: hashedPassword });
+        await newUser.save();
+
+        res.status(201).json({ message: 'Signup successful', user: { username } });
+    } catch (error) {
+        console.error('Signup error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
